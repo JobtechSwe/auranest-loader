@@ -1,0 +1,12 @@
+import os
+
+PG_HOST = os.getenv('PG_HOST')
+PG_PORT = os.getenv('PG_PORT', 5432)
+PG_DBNAME = os.getenv('PG_DBNAME')
+PG_USER = os.getenv('PG_USER')
+PG_PASSWORD = os.getenv('PG_PASSWORD')
+PG_BATCH_SIZE = os.getenv('PG_BATCH_SIZE', 2000)
+AURANEST_FEED_URL = os.getenv('AURANEST_FEED_URL')
+AURANEST_DETAILS_URL = os.getenv('AURANEST_DETAILS_URL')
+AURANEST_USER = os.getenv('AURANEST_USER')
+AURANEST_PASSWORD = os.getenv('AURANEST_PASSWORD')
