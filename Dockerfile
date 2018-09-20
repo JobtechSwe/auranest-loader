@@ -13,3 +13,5 @@ RUN apk update && \
 
 WORKDIR /
 RUN rm -fr /app
+
+USER 10000
