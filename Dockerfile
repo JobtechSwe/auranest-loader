@@ -1,16 +1,15 @@
-FROM ubuntu:18.04
+FROM python:3-alpine
 
-COPY . /app
-
-RUN apt-get update -y \
-  && apt-get install -y --fix-missing python3.7 python3-pip python3-setuptools postgresql-client
-
+EXPOSE 8081
+COPY . /app 
 
 WORKDIR /app
-RUN pip3 --trusted-host pypi.python.org install -r requirements.txt
-RUN python3 setup.py install
+RUN apk update && \
+ apk add postgresql-libs && \
+ apk add --virtual .build-deps gcc musl-dev postgresql-dev && \
+ python3 -m pip install -r requirements.txt --no-cache-dir && \
+ python3 setup.py install && \
+ apk --purge del .build-deps
 
 WORKDIR /
 RUN rm -fr /app
-RUN apt-get clean
-
