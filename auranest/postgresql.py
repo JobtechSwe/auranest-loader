@@ -35,11 +35,12 @@ def query(sql, args):
 def system_status():
     cur = pg_conn.cursor()
     # Fetch last timestamp from table
-    cur.execute("SELECT ts FROM auranest ORDER BY ts DESC LIMIT 1")
+    cur.execute("SELECT timestamp FROM auranest ORDER BY ts DESC LIMIT 1")
     ts_row = cur.fetchone()
     ts = _convert_to_timestring(ts_row[0]) \
         if ts_row else '2018-01-01'  # Set a reasonable "epoch"
-    cur.execute("SELECT id FROM auranest WHERE ts = %s", [_convert_to_timestamp(ts)])
+    cur.execute("SELECT id FROM auranest WHERE timestamp = %s",
+                [_convert_to_timestamp(ts)])
     id_rows = cur.fetchall()
     ids = [id_row[0] for id_row in id_rows]
     cur.close()
@@ -54,9 +55,9 @@ def bulk(items):
                       _convert_to_timestamp(item['updatedAt']),
                       json.dumps(item)) for item in items if item]
     cur = pg_conn.cursor()
-    cur.executemany("INSERT INTO auranest (id, ts, doc) VALUES (%s, %s, %s) "
+    cur.executemany("INSERT INTO auranest (id, timestamp, doc) VALUES (%s, %s, %s) "
                     "ON CONFLICT (id) DO UPDATE "
-                    "SET ts = %s, doc = %s", adapted_items,)
+                    "SET timestamp = %s, doc = %s", adapted_items,)
     pg_conn.commit()
     elapsed_time = time.time() - start_time
 

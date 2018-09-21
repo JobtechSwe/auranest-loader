@@ -1,6 +1,5 @@
 FROM python:3-alpine
 
-EXPOSE 8081
 COPY . /app 
 
 WORKDIR /app
