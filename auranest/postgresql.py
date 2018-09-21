@@ -35,7 +35,7 @@ def query(sql, args):
 def system_status():
     cur = pg_conn.cursor()
     # Fetch last timestamp from table
-    cur.execute("SELECT timestamp FROM auranest ORDER BY ts DESC LIMIT 1")
+    cur.execute("SELECT timestamp FROM auranest ORDER BY timestamp DESC LIMIT 1")
     ts_row = cur.fetchone()
     ts = _convert_to_timestring(ts_row[0]) \
         if ts_row else '2018-01-01'  # Set a reasonable "epoch"
