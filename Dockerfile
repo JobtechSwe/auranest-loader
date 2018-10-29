@@ -9,6 +9,7 @@ RUN apk update && \
 RUN python3 -m pip install -r requirements.txt --no-cache-dir && \
     python3 setup.py install && \
     apk --purge del .build-deps
+RUN apk add git
 
 WORKDIR /
 RUN rm -fr /app
