@@ -4,13 +4,16 @@ COPY . /app
 
 WORKDIR /app
 RUN apk update && \
- apk add postgresql-libs && \
- apk add --virtual .build-deps gcc musl-dev postgresql-dev && \
- python3 -m pip install -r requirements.txt --no-cache-dir && \
- python3 setup.py install && \
- apk --purge del .build-deps
+    apk add postgresql-libs && \
+    apk add --virtual .build-deps gcc musl-dev postgresql-dev
+RUN python3 -m pip install -r requirements.txt --no-cache-dir && \
+    python3 setup.py install && \
+    apk --purge del .build-deps
 
 WORKDIR /
 RUN rm -fr /app
+
+# show commit info
+RUN git log -1
 
 USER 10000
