@@ -21,7 +21,8 @@ pg_conn = psycopg2.connect(host=settings.PG_HOST,
                            port=settings.PG_PORT,
                            dbname=settings.PG_DBNAME,
                            user=settings.PG_USER,
-                           password=settings.PG_PASSWORD)
+                           password=settings.PG_PASSWORD,
+                           sslmode='require')
 
 
 def query(sql, args):
