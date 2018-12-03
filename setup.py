@@ -4,7 +4,7 @@ setup(
     name='AuranestLoader',
     author='Team Manatee',
     version='1.0.0',
-    packages=['auranest'],
+    packages=['loader'],
     include_package_data=True,
     install_requires=[
         'requests', 'psycopg2-binary', 'pytest'
