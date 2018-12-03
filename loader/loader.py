@@ -2,34 +2,32 @@ import logging
 import threading
 import requests
 import sys
-from auranest import settings
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
-def load_ad(ad_id, ts, results, index):
+def load_ad(ad_id, ts, results, index, url, user, pwd):
     fail_count = 0
     while True:
         try:
-            r = requests.get(settings.AURANEST_DETAILS_URL,
-                             auth=(settings.AURANEST_USER, settings.AURANEST_PASSWORD),
+            r = requests.get(url, auth=(user, pwd),
                              params={'id': ad_id}, timeout=60)
             r.raise_for_status()
-            auranest_ad = r.json()[0]
-            if auranest_ad:
-                auranest_ad['updatedAt'] = ts
-                results[index] = auranest_ad
+            ad = r.json()[0]
+            if ad:
+                ad['updatedAt'] = ts
+                results[index] = ad
                 break
         except requests.exceptions.RequestException as e:
             fail_count += 1
             log.warning('Failed to download ad "%s" %d times' % (ad_id, fail_count))
             if fail_count > 10:
-                log.error("Unable to continue loading data from Auranest", e)
+                log.error("Unable to continue loading data from %s" % url, e)
                 sys.exit(1)
 
 
-def load(next_date, next_id=None):
+def load(feed_url, details_url, next_date, next_id=None, username=None, password=None):
     payload = {'since': next_date}
     if next_id:
         payload['id'] = next_id
@@ -38,13 +36,17 @@ def load(next_date, next_id=None):
 
     items = None
     try:
-        r = requests.get(settings.AURANEST_FEED_URL,
-                         auth=(settings.AURANEST_USER, settings.AURANEST_PASSWORD),
-                         params=payload)
+        if username and password:
+            r = requests.get(feed_url,
+                             auth=(username, password),
+                             params=payload)
+        else:
+            r = requests.get(feed_url,
+                             params=payload)
         r.raise_for_status()
         items = r.json()
     except requests.exceptions.RequestException as e:
-        log.error("Failed to read from auranest", e)
+        log.error("Failed to read from %s" % feed_url, e)
     results = []
 
     if items:
@@ -58,7 +60,10 @@ def load(next_date, next_id=None):
             item = items[i]
             threads[i] = threading.Thread(target=load_ad, args=(item['id'],
                                                                 item['updatedAt'],
-                                                                results, i,))
+                                                                results, i,
+                                                                details_url,
+                                                                username,
+                                                                password))
             threads[i].start()
 
         # Waiting for all threads to finish

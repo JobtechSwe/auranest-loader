@@ -11,7 +11,8 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'load-auranest = auranest.main:start',
+            'load-auranest = loader.main:start_auranest',
+            'load-platsannonser = loader.main:start_platsannonser',
         ],
     },
 )

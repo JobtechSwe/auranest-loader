@@ -1,5 +1,5 @@
 import logging
-from auranest import settings
+from loader import settings
 from datetime import datetime
 import psycopg2
 import sys
@@ -15,14 +15,16 @@ if not settings.PG_DBNAME or not settings.PG_USER:
     sys.exit(1)
 
 if not settings.PG_HOST:
-    log.info("Environment PG_HOST not set. Assuming local socket.")
-
-pg_conn = psycopg2.connect(host=settings.PG_HOST,
-                           port=settings.PG_PORT,
-                           dbname=settings.PG_DBNAME,
-                           user=settings.PG_USER,
-                           password=settings.PG_PASSWORD,
-                           sslmode='require')
+    log.info("PG_HOST not set, assuming local socket")
+    pg_conn = psycopg2.connect(dbname=settings.PG_DBNAME,
+                               user=settings.PG_USER)
+else:
+    pg_conn = psycopg2.connect(host=settings.PG_HOST,
+                               port=settings.PG_PORT,
+                               dbname=settings.PG_DBNAME,
+                               user=settings.PG_USER,
+                               password=settings.PG_PASSWORD,
+                               sslmode='require')
 
 
 def query(sql, args):
@@ -33,14 +35,14 @@ def query(sql, args):
     return rows
 
 
-def system_status():
+def system_status(table):
     cur = pg_conn.cursor()
     # Fetch last timestamp from table
-    cur.execute("SELECT timestamp FROM auranest ORDER BY timestamp DESC LIMIT 1")
+    cur.execute("SELECT timestamp FROM "+table+" ORDER BY timestamp DESC LIMIT 1")
     ts_row = cur.fetchone()
     ts = _convert_to_timestring(ts_row[0]) \
         if ts_row else '2018-01-01'  # Set a reasonable "epoch"
-    cur.execute("SELECT id FROM auranest WHERE timestamp = %s",
+    cur.execute("SELECT id FROM "+table+" WHERE timestamp = %s",
                 [_convert_to_timestamp(ts)])
     id_rows = cur.fetchall()
     ids = [id_row[0] for id_row in id_rows]
@@ -48,7 +50,7 @@ def system_status():
     return {'last_timestamp': ts, 'last_ids': ids}
 
 
-def bulk(items):
+def bulk(items, table):
     start_time = time.time()
     adapted_items = [(item['id'].strip(),
                       _convert_to_timestamp(item['updatedAt']),
@@ -56,7 +58,7 @@ def bulk(items):
                       _convert_to_timestamp(item['updatedAt']),
                       json.dumps(item)) for item in items if item]
     cur = pg_conn.cursor()
-    cur.executemany("INSERT INTO auranest (id, timestamp, doc) VALUES (%s, %s, %s) "
+    cur.executemany("INSERT INTO "+table+" (id, timestamp, doc) VALUES (%s, %s, %s) "
                     "ON CONFLICT (id) DO UPDATE "
                     "SET timestamp = %s, doc = %s", adapted_items,)
     pg_conn.commit()
