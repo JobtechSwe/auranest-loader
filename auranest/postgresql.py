@@ -50,7 +50,7 @@ def system_status():
 
 def bulk(items):
     start_time = time.time()
-    adapted_items = [(item['id'],
+    adapted_items = [(item['id'].strip(),
                       _convert_to_timestamp(item['updatedAt']),
                       json.dumps(item),
                       _convert_to_timestamp(item['updatedAt']),

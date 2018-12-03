@@ -23,7 +23,7 @@ def load_ad(ad_id, ts, results, index):
                 break
         except requests.exceptions.RequestException as e:
             fail_count += 1
-            log.warn('Failed to download ad "%s" %d times' % (ad_id, fail_count))
+            log.warning('Failed to download ad "%s" %d times' % (ad_id, fail_count))
             if fail_count > 10:
                 log.error("Unable to continue loading data from Auranest", e)
                 sys.exit(1)
@@ -56,7 +56,8 @@ def load(next_date, next_id=None):
 
         for i in range(len(items)):
             item = items[i]
-            threads[i] = threading.Thread(target=load_ad, args=(item['id'], item['updatedAt'],
+            threads[i] = threading.Thread(target=load_ad, args=(item['id'],
+                                                                item['updatedAt'],
                                                                 results, i,))
             threads[i].start()
 
@@ -68,4 +69,4 @@ def load(next_date, next_id=None):
         # Break the loop
         next_date = None
 
-    return (next_date, next_id, results)
+    return next_date, next_id, results
