@@ -41,7 +41,7 @@ def system_status(table):
     cur.execute("SELECT timestamp FROM "+table+" ORDER BY timestamp DESC LIMIT 1")
     ts_row = cur.fetchone()
     ts = _convert_to_timestring(ts_row[0]) \
-        if ts_row else '2018-01-01'  # Set a reasonable "epoch"
+        if ts_row else settings.LOADER_START_DATE
     cur.execute("SELECT id FROM "+table+" WHERE timestamp = %s",
                 [_convert_to_timestamp(ts)])
     id_rows = cur.fetchall()
