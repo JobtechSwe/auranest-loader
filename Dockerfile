@@ -12,7 +12,7 @@ RUN python3 -m pip install -r requirements.txt --no-cache-dir && \
 
 RUN apk add git
 # show commit info
-RUN git log -1
+# RUN git log -1
 
 WORKDIR /
 RUN rm -fr /app
