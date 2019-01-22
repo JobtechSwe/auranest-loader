@@ -35,7 +35,33 @@ def query(sql, args):
     return rows
 
 
+def table_exists(table):
+    cur = pg_conn.cursor()
+    cur.execute("select exists(select * from information_schema.tables "
+                "where table_name=%s)", (table,))
+    return cur.fetchone()[0]
+
+
+def create_default_table(table):
+    statements = (
+        "CREATE TABLE {table} (id CHAR(100) PRIMARY KEY, doc JSONB, "
+            "timestamp BIGINT, expires BIGINT)".format(table=table),
+        "CREATE INDEX {table}_timestamp_idx ON {table} (timestamp)".format(table=table),
+        "CREATE INDEX {table}_expires_idx ON {table} (expires)".format(table=table),
+    )
+    try:
+        cur = pg_conn.cursor()
+        for statement in statements:
+            cur.execute(statement)
+        cur.close()
+        pg_conn.commit()
+    except (Exception, psycopg2.DatabaseError) as e:
+        log.error("Failed to create database table: %s" % str(e))
+
+
 def system_status(table):
+    if not table_exists(table):
+        create_default_table(table)
     cur = pg_conn.cursor()
     # Fetch last timestamp from table
     cur.execute("SELECT timestamp FROM "+table+" ORDER BY timestamp DESC LIMIT 1")

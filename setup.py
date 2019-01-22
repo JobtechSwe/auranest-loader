@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='AuranestLoader',
-    author='Team Manatee',
+    author='Team Narwhal',
     version='1.0.0',
     packages=find_packages(),
     include_package_data=True,

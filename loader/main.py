@@ -8,7 +8,7 @@ log = logging.getLogger(__name__)
 
 
 def start_auranest():
-    status = postgresql.system_status('auranest')
+    status = postgresql.system_status(settings.PG_AURANEST_TABLE)
     next_ts = status['last_timestamp']
     next_id = None
     counter = 0
@@ -23,11 +23,11 @@ def start_auranest():
         counter += len(results)
         log.info("Downloaded %d documents. Total so far: %d" % (len(results), counter))
         if results:
-            postgresql.bulk(results, 'auranest')
+            postgresql.bulk(results, settings.PG_AURANEST_TABLE)
 
 
 def start_platsannonser():
-    status = postgresql.system_status('platsannonser')
+    status = postgresql.system_status(settings.PG_PLATSANNONS_TABLE)
     next_ts = status['last_timestamp']
     next_id = None
     counter = 0
@@ -40,14 +40,14 @@ def start_platsannonser():
         counter += len(results)
         log.info("Downloaded %d documents. Total so far: %d" % (len(results), counter))
         if results:
-            postgresql.bulk(results, 'platsannonser')
+            postgresql.bulk(results, settings.PG_PLATSANNONS_TABLE)
 
 
 if __name__ == '__main__':
     if len(sys.argv) < 1:
         print("Usage: %s [platsannonser|auranest]" % sys.argv[0])
         sys.exit(0)
-    if sys.args[1] == 'auranest':
+    if sys.argv[1] == 'auranest':
         start_auranest()
     elif sys.argv[1] == 'platsannonser':
         start_platsannonser()
