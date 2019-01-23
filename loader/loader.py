@@ -7,7 +7,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
-def load_ad(ad_id, ts, results, index, url, user, pwd):
+def load_ad(ad_id, ts, results, index, url, expires_path, user, pwd):
     fail_count = 0
     while True:
         try:
@@ -17,6 +17,7 @@ def load_ad(ad_id, ts, results, index, url, user, pwd):
             ad = r.json()[0]
             if ad:
                 ad['updatedAt'] = ts
+                ad['expiresAt'] = _get_value_at(expires_path, ad)
                 results[index] = ad
                 break
         except requests.exceptions.RequestException as e:
@@ -27,7 +28,24 @@ def load_ad(ad_id, ts, results, index, url, user, pwd):
                 sys.exit(1)
 
 
-def load(feed_url, details_url, next_date, next_id=None, username=None, password=None):
+def _get_value_at(path, data):
+    keypath = path.split('.')
+    value = None
+    for i in range(len(keypath)):
+        element = data.get(keypath[i])
+        if isinstance(element, str):
+            value = element
+            break
+        if isinstance(element, list):
+            value = ",".join(element)
+            break
+        if isinstance(element, dict):
+            data = element
+    return value
+
+
+def load(feed_url, details_url, next_date, expires_path,
+         next_id=None, username=None, password=None):
     payload = {'since': next_date}
     if next_id:
         payload['id'] = next_id
@@ -62,6 +80,7 @@ def load(feed_url, details_url, next_date, next_id=None, username=None, password
                                                                 item['updatedAt'],
                                                                 results, i,
                                                                 details_url,
+                                                                expires_path,
                                                                 username,
                                                                 password))
             threads[i].start()

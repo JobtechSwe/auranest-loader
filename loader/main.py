@@ -17,7 +17,9 @@ def start_auranest():
          next_id,
          results) = loader.load(feed_url=settings.AURANEST_FEED_URL,
                                 details_url=settings.AURANEST_DETAILS_URL,
-                                next_date=next_ts, next_id=next_id,
+                                next_date=next_ts,
+                                expires_path=settings.AURANEST_EXPIRE_PATH,
+                                next_id=next_id,
                                 username=settings.AURANEST_USER,
                                 password=settings.AURANEST_PASSWORD)
         counter += len(results)
@@ -36,7 +38,8 @@ def start_platsannonser():
          next_id,
          results) = loader.load(feed_url=settings.LA_FEED_URL,
                                 details_url=settings.LA_DETAILS_URL,
-                                next_date=next_ts, next_id=next_id)
+                                next_date=next_ts,
+                                expires_path=settings.LA_EXPIRE_PATH, next_id=next_id)
         counter += len(results)
         log.info("Downloaded %d documents. Total so far: %d" % (len(results), counter))
         if results:
