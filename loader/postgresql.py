@@ -24,7 +24,7 @@ else:
                                dbname=settings.PG_DBNAME,
                                user=settings.PG_USER,
                                password=settings.PG_PASSWORD,
-                               sslmode='require')
+                               sslmode=settings.PG_SSLMODE)
 
 
 def query(sql, args):
