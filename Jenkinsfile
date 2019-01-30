@@ -34,16 +34,13 @@ pipeline {
     }
     post {
         success {
-            sh 'printenv'
-            //slackSend color: 'good', message: 'Job-ad-loader build ${buildTag} successful.'
+            slackSend color: 'good', message: '"${GIT_URL}" "${GIT_BRANCH}" "${GIT_COMMIT}" successfully built to "${openshiftProject}" build "${buildTag}" .'
         }
         failure {
-            sh 'printenv'                
-            //slackSend color: 'bad', message: 'Job-ad-loader build ${buildTag} failed.'
+            slackSend color: 'bad', message: '"${GIT_URL}" "${GIT_BRANCH}" "${GIT_COMMIT}" failed to build to "${openshiftProject}" build "${buildTag}" .'
         }
         unstable {
-            sh 'printenv'
-            //slackSend color: 'bad', message: 'Job-ad-loader build ${buildTag} unstable.'
+            slackSend color: 'bad', message: '"${GIT_URL}" "${GIT_BRANCH}" "${GIT_COMMIT}" unstable build for "${openshiftProject}" build "${buildTag}" .'
         }
     }
 }
