@@ -32,4 +32,15 @@ pipeline {
             }
         }
     }
+    post {
+        success {
+            slackSend color: 'good', message: 'Job-ad-loader build ${buildTag} successfull.'
+        }
+        failure {
+            slackSend color: 'bad', message: 'Job-ad-loader build ${buildTag} failed.'
+        }
+        unstable {
+            slackSend color: 'bad', message: 'Job-ad-loader build ${buildTag} unstable.'
+        }
+    }
 }
