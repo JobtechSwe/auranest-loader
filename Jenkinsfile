@@ -20,21 +20,21 @@ pipeline {
                 }
             }
         }
-    //     stage('Build and Tag Openshift Image'){
-    //         steps{
-    //             openshiftBuild(namespace:'${openshiftProject}', bldCfg: 'job-ad-loaders', showBuildLogs: 'true')
-    //             openshiftTag(namespace:'${openshiftProject}', srcStream: 'job-ad-loaders', srcTag: 'latest', destStream: 'job-ad-loaders', destTag:'${buildTag}')
-    //         }
-    //     }
-    //     stage('Change Cronjob Image'){
-    //         steps{
-    //             sh "oc patch cronjobs/jobtechjobs-loader --type=json -p='[{\"op\":\"replace\", \"path\": \"/spec/jobTemplate/spec/template/spec/containers/0/image\", \"value\":\"docker-registry.default.svc:5000/${openshiftProject}/elastic-importers:${buildTag}\"}]' -n ${openshiftProject}"
-    //         }
-    //     }
+        stage('Build and Tag Openshift Image'){
+            steps{
+                openshiftBuild(namespace:'${openshiftProject}', bldCfg: 'job-ad-loaders', showBuildLogs: 'true')
+                openshiftTag(namespace:'${openshiftProject}', srcStream: 'job-ad-loaders', srcTag: 'latest', destStream: 'job-ad-loaders', destTag:'${buildTag}')
+            }
+        }
+        stage('Change Cronjob Image'){
+            steps{
+                sh "oc patch cronjobs/jobtechjobs-loader --type=json -p='[{\"op\":\"replace\", \"path\": \"/spec/jobTemplate/spec/template/spec/containers/0/image\", \"value\":\"docker-registry.default.svc:5000/${openshiftProject}/jobtechjobs-loader:${buildTag}\"}]' -n ${openshiftProject}"
+            }
+        }
     }
     post {
         success {
-            slackSend color: 'good', message: "${GIT_URL} ${GIT_BRANCH} ${GIT_COMMIT} successfully built to ${openshiftProject} build ${buildTag}."
+            slackSend color: 'good', message: "${GIT_URL}, Branch: ${GIT_BRANCH}, Commit: ${GIT_COMMIT} successfully built to project ${openshiftProject} build: ${buildTag}."
         }
         failure {
             slackSend color: 'bad', message: "${GIT_URL} ${GIT_BRANCH} ${GIT_COMMIT} failed to build to ${openshiftProject} build ${buildTag}."
