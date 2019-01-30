@@ -20,27 +20,30 @@ pipeline {
                 }
             }
         }
-        stage('Build and Tag Openshift Image'){
-            steps{
-                openshiftBuild(namespace:'${openshiftProject}', bldCfg: 'job-ad-loaders', showBuildLogs: 'true')
-                openshiftTag(namespace:'${openshiftProject}', srcStream: 'job-ad-loaders', srcTag: 'latest', destStream: 'job-ad-loaders', destTag:'${buildTag}')
-            }
-        }
-        stage('Change Cronjob Image'){
-            steps{
-                sh "oc patch cronjobs/jobtechjobs-loader --type=json -p='[{\"op\":\"replace\", \"path\": \"/spec/jobTemplate/spec/template/spec/containers/0/image\", \"value\":\"docker-registry.default.svc:5000/${openshiftProject}/elastic-importers:${buildTag}\"}]' -n ${openshiftProject}"
-            }
-        }
+    //     stage('Build and Tag Openshift Image'){
+    //         steps{
+    //             openshiftBuild(namespace:'${openshiftProject}', bldCfg: 'job-ad-loaders', showBuildLogs: 'true')
+    //             openshiftTag(namespace:'${openshiftProject}', srcStream: 'job-ad-loaders', srcTag: 'latest', destStream: 'job-ad-loaders', destTag:'${buildTag}')
+    //         }
+    //     }
+    //     stage('Change Cronjob Image'){
+    //         steps{
+    //             sh "oc patch cronjobs/jobtechjobs-loader --type=json -p='[{\"op\":\"replace\", \"path\": \"/spec/jobTemplate/spec/template/spec/containers/0/image\", \"value\":\"docker-registry.default.svc:5000/${openshiftProject}/elastic-importers:${buildTag}\"}]' -n ${openshiftProject}"
+    //         }
+    //     }
     }
     post {
         success {
-            slackSend color: 'good', message: 'Job-ad-loader build ${buildTag} successfull.'
+            sh 'printenv'
+            //slackSend color: 'good', message: 'Job-ad-loader build ${buildTag} successful.'
         }
         failure {
-            slackSend color: 'bad', message: 'Job-ad-loader build ${buildTag} failed.'
+            sh 'printenv'                
+            //slackSend color: 'bad', message: 'Job-ad-loader build ${buildTag} failed.'
         }
         unstable {
-            slackSend color: 'bad', message: 'Job-ad-loader build ${buildTag} unstable.'
+            sh 'printenv'
+            //slackSend color: 'bad', message: 'Job-ad-loader build ${buildTag} unstable.'
         }
     }
 }
