@@ -23,8 +23,6 @@ pipeline {
         stage('Build and Tag Openshift Image'){
             steps{
                 openshiftBuild(namespace:'${openshiftProject}', bldCfg: 'job-ad-loaders', showBuildLogs: 'true')
-            }
-            steps{
                 openshiftTag(namespace:'${openshiftProject}', srcStream: 'job-ad-loaders', srcTag: 'latest', destStream: 'job-ad-loaders', destTag:'${buildTag}')
             }
         }
