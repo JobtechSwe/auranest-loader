@@ -13,7 +13,7 @@ pipeline {
         }
         stage('Code analysis'){
             steps {
-            withSonarCubeEnv('Jobtech_SonarQube_Server'){
+            withSonarQubeEnv('Jobtech_SonarQube_Server'){
                 sh "${scannerHome}/bin/sonar-scanner -Dsonar.projecjetKey=sokapi_sonar -Dsonar.sources=."
                 }
             }
