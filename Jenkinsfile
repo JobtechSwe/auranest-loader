@@ -34,13 +34,13 @@ pipeline {
     }
     post {
         success {
-            slackSend color: 'good', message: '"${GIT_URL}" "${GIT_BRANCH}" "${GIT_COMMIT}" successfully built to "${openshiftProject}" build "${buildTag}" .'
+            slackSend color: 'good', message: "${GIT_URL} ${GIT_BRANCH} ${GIT_COMMIT} successfully built to ${openshiftProject} build ${buildTag}."
         }
         failure {
-            slackSend color: 'bad', message: '"${GIT_URL}" "${GIT_BRANCH}" "${GIT_COMMIT}" failed to build to "${openshiftProject}" build "${buildTag}" .'
+            slackSend color: 'bad', message: "${GIT_URL} ${GIT_BRANCH} ${GIT_COMMIT} failed to build to ${openshiftProject} build ${buildTag}."
         }
         unstable {
-            slackSend color: 'bad', message: '"${GIT_URL}" "${GIT_BRANCH}" "${GIT_COMMIT}" unstable build for "${openshiftProject}" build "${buildTag}" .'
+            slackSend color: 'bad', message: "${GIT_URL} ${GIT_BRANCH} ${GIT_COMMIT} unstable build for ${openshiftProject} build ${buildTag}."
         }
     }
 }
