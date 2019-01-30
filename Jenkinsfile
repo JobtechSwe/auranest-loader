@@ -26,5 +26,10 @@ pipeline {
                 openshiftTag(namespace:'${openshiftProject}', srcStream: 'job-ad-loaders', srcTag: 'latest', destStream: 'job-ad-loaders', destTag:'${buildTag}')
             }
         }
+        stage('Change Cronjob Image'){
+            steps{
+                sh "oc patch cronjobs/jobtechjobs-loader --type=json -p='[{\"op\":\"replace\", \"path\": \"/spec/jobTemplate/spec/template/spec/containers/0/image\", \"value\":\"docker-registry.default.svc:5000/${openshiftProject}/elastic-importers:${buildTag}\"}]' -n ${openshiftProject}"
+            }
+        }
     }
 }
