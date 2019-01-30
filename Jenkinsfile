@@ -2,6 +2,8 @@ pipeline {
     agent any
     environment {
         scannerHome = tool 'Jobtech_Sokapi_SonarScanner'
+        version = "1"
+        buildTag = "${version}.${BUILD_NUMBER}"
     }
     stages{
         stage('Checkout code'){
@@ -16,6 +18,11 @@ pipeline {
                 withSonarQubeEnv('Jobtech_SonarQube_Server'){
                 sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=job_ad_loader -Dsonar.sources=."
                 }
+            }
+        }
+        stage('Build Openshift Image'){
+            steps{
+                openshiftBuild(namespace:'${openshiftProject}', buildConfig: 'job-ad-loaders', showBuildLogs: 'true')
             }
         }
     }
