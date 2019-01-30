@@ -22,7 +22,7 @@ pipeline {
         }
         stage('Build Openshift Image'){
             steps{
-                openshiftBuild(namespace:'${openshiftProject}', buildConfig: 'job-ad-loaders', showBuildLogs: 'true')
+                openshiftBuild(namespace:'${openshiftProject}', bldCfg: 'job-ad-loaders', showBuildLogs: 'true')
             }
         }
     }
