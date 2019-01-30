@@ -14,8 +14,7 @@ pipeline {
         stage('Code analysis'){
             steps {
                 withSonarQubeEnv('Jobtech_SonarQube_Server'){
-                sonar.projectKey = 'job-ad-loaders'
-                sh "${scannerHome}/bin/sonar-scanner -Dsonar.projecjetKey=sokapi_sonar -Dsonar.sources=."
+                sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=job_ad_loader -Dsonar.sources=."
                 }
             }
         }
