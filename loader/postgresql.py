@@ -44,7 +44,7 @@ def table_exists(table):
 
 def create_default_table(table):
     statements = (
-        "CREATE TABLE {table} (id CHAR(100) PRIMARY KEY, doc JSONB, "
+        "CREATE TABLE {table} (id CHAR(64) PRIMARY KEY, doc JSONB, "
         "timestamp BIGINT, expires BIGINT)".format(table=table),
         "CREATE INDEX {table}_timestamp_idx ON {table} (timestamp)".format(table=table),
         "CREATE INDEX {table}_expires_idx ON {table} (expires)".format(table=table),
