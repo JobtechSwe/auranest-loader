@@ -19,5 +19,5 @@ LOADER_START_DATE = os.getenv('LOADER_START_DATE', '2018-01-01')
 LA_FEED_URL = os.getenv('LA_FEED_URL')
 LA_DETAILS_URL = os.getenv('LA_DETAILS_URL')
 
-LA_EXPIRE_PATH = 'status.sista_publiceringsdatum'
+LA_EXPIRE_PATH = 'annons.sistaPubliceringsdatum'
 AURANEST_EXPIRE_PATH = 'source.removedAt'
