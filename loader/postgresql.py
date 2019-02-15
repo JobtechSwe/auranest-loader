@@ -24,7 +24,7 @@ else:
                                dbname=settings.PG_DBNAME,
                                user=settings.PG_USER,
                                password=settings.PG_PASSWORD,
-                               sslmode='require')
+                               sslmode=settings.PG_SSLMODE)
 
 
 def query(sql, args):
@@ -35,7 +35,33 @@ def query(sql, args):
     return rows
 
 
+def table_exists(table):
+    cur = pg_conn.cursor()
+    cur.execute("select exists(select * from information_schema.tables "
+                "where table_name=%s)", (table,))
+    return cur.fetchone()[0]
+
+
+def create_default_table(table):
+    statements = (
+        "CREATE TABLE {table} (id CHAR(64) PRIMARY KEY, doc JSONB, "
+        "timestamp BIGINT, expires BIGINT)".format(table=table),
+        "CREATE INDEX {table}_timestamp_idx ON {table} (timestamp)".format(table=table),
+        "CREATE INDEX {table}_expires_idx ON {table} (expires)".format(table=table),
+    )
+    try:
+        cur = pg_conn.cursor()
+        for statement in statements:
+            cur.execute(statement)
+        cur.close()
+        pg_conn.commit()
+    except (Exception, psycopg2.DatabaseError) as e:
+        log.error("Failed to create database table: %s" % str(e))
+
+
 def system_status(table):
+    if not table_exists(table):
+        create_default_table(table)
     cur = pg_conn.cursor()
     # Fetch last timestamp from table
     cur.execute("SELECT timestamp FROM "+table+" ORDER BY timestamp DESC LIMIT 1")
@@ -54,13 +80,16 @@ def bulk(items, table):
     start_time = time.time()
     adapted_items = [(item['id'].strip(),
                       _convert_to_timestamp(item['updatedAt']),
+                      _convert_to_timestamp(item.get('expiresAt')),
                       json.dumps(item),
                       _convert_to_timestamp(item['updatedAt']),
+                      _convert_to_timestamp(item.get('expiresAt')),
                       json.dumps(item)) for item in items if item]
     cur = pg_conn.cursor()
-    cur.executemany("INSERT INTO "+table+" (id, timestamp, doc) VALUES (%s, %s, %s) "
+    cur.executemany("INSERT INTO "+table+" "
+                    "(id, timestamp, expires, doc) VALUES (%s, %s, %s, %s) "
                     "ON CONFLICT (id) DO UPDATE "
-                    "SET timestamp = %s, doc = %s", adapted_items,)
+                    "SET timestamp = %s, expires = %s, doc = %s", adapted_items,)
     pg_conn.commit()
     elapsed_time = time.time() - start_time
 
@@ -68,6 +97,8 @@ def bulk(items, table):
 
 
 def _convert_to_timestamp(date):
+    if not date:
+        return None
     ts = 0
     for dateformat in [
             '%Y-%m-%dT%H:%M:%SZ',
