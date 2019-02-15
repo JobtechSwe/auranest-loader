@@ -4,6 +4,7 @@ pipeline {
         scannerHome = tool 'Jobtech_Sokapi_SonarScanner'
         version = "1"
         buildTag = "${version}.${BUILD_NUMBER}"
+        buildName ="job-ad-loaders"
     }
     stages{
         stage('Checkout code'){
@@ -22,13 +23,13 @@ pipeline {
         }
         stage('Build and Tag Openshift Image'){
             steps{
-                openshiftBuild(namespace:'${openshiftProject}', bldCfg: 'job-ad-loaders', showBuildLogs: 'true')
-                openshiftTag(namespace:'${openshiftProject}', srcStream: 'job-ad-loaders', srcTag: 'latest', destStream: 'job-ad-loaders', destTag:'${buildTag}')
+                openshiftBuild(namespace:'${openshiftProject}', bldCfg: '${buildName}', showBuildLogs: 'true')
+                openshiftTag(namespace:'${openshiftProject}', srcStream: '${buildName}', srcTag: 'latest', destStream: '${buildName}', destTag:'${buildTag}')
             }
         }
         stage('Change Cronjob Image'){
             steps{
-                sh "oc patch cronjobs/jobtechjobs-loader --type=json -p='[{\"op\":\"replace\", \"path\": \"/spec/jobTemplate/spec/template/spec/containers/0/image\", \"value\":\"docker-registry.default.svc:5000/${openshiftProject}/jobtechjobs-loader:${buildTag}\"}]' -n ${openshiftProject}"
+                sh "oc patch cronjobs/jobtechjobs-loader --type=json -p='[{\"op\":\"replace\", \"path\": \"/spec/jobTemplate/spec/template/spec/containers/0/image\", \"value\":\"docker-registry.default.svc:5000/${openshiftProject}/'${buildName}':${buildTag}\"}]' -n ${openshiftProject}"
             }
         }
     }
