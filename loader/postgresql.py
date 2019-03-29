@@ -68,8 +68,25 @@ def system_status(table):
     ts_row = cur.fetchone()
     ts = _convert_to_timestring(ts_row[0]) \
         if ts_row else settings.LOADER_START_DATE
-    cur.execute("SELECT id FROM "+table+" WHERE timestamp = %s",
-                [_convert_to_timestamp(ts)])
+    cur.execute("SELECT id FROM " + table +" WHERE timestamp = %s",
+                [convert_to_timestamp(ts)])
+    id_rows = cur.fetchall()
+    ids = [id_row[0] for id_row in id_rows]
+    cur.close()
+    return {'last_timestamp': ts, 'last_ids': ids}
+
+
+def system_status_platsannonser(table):
+    if not table_exists(table):
+        create_default_table(table)
+    cur = pg_conn.cursor()
+    # Fetch last timestamp from table
+    cur.execute("SELECT timestamp FROM "+table+" ORDER BY timestamp DESC LIMIT 1")
+    ts_row = cur.fetchone()
+    ts = ts_row[0] \
+        if ts_row else convert_to_timestamp(settings.LOADER_START_DATE)
+    cur.execute("SELECT TRIM(id) FROM "+table+" WHERE timestamp = %s",
+                [ts])
     id_rows = cur.fetchall()
     ids = [id_row[0] for id_row in id_rows]
     cur.close()
@@ -79,11 +96,11 @@ def system_status(table):
 def bulk(items, table):
     start_time = time.time()
     adapted_items = [(item['id'].strip(),
-                      _convert_to_timestamp(item['updatedAt']),
-                      _convert_to_timestamp(item.get('expiresAt')),
+                      convert_to_timestamp(item['updatedAt']),
+                      convert_to_timestamp(item.get('expiresAt')),
                       json.dumps(item),
-                      _convert_to_timestamp(item['updatedAt']),
-                      _convert_to_timestamp(item.get('expiresAt')),
+                      convert_to_timestamp(item['updatedAt']),
+                      convert_to_timestamp(item.get('expiresAt')),
                       json.dumps(item)) for item in items if item]
     cur = pg_conn.cursor()
     cur.executemany("INSERT INTO "+table+" "
@@ -96,14 +113,19 @@ def bulk(items, table):
     log.info("Bulk inserted %d docs in: %s seconds." % (len(adapted_items), elapsed_time))
 
 
-def _convert_to_timestamp(date):
+def convert_to_timestamp(date):
     if not date:
         return None
+    if type(date) == int and date > 0:
+        # Already a valid timestamp
+        return date
+
     ts = 0
     for dateformat in [
             '%Y-%m-%dT%H:%M:%SZ',
             '%Y-%m-%dT%H:%M:%S%Z',
             '%Y-%m-%dT%H:%M:%S%z',
+            '%Y-%m-%d %H:%M:%S',
             '%Y-%m-%d']:
         try:
             ts = time.mktime(time.strptime(date, dateformat)) * 1000
