@@ -39,6 +39,7 @@ def start_platsannonser():
     if bootstrap_needed:
         # Initial load from empty database
         load_and_save_bootstrap_ads()
+        last_ids, last_ts = get_system_status_platsannonser()
 
     load_and_save_updated_ads(last_ts, last_ids)
 
@@ -97,13 +98,14 @@ def fetch_details_and_save(ad_ids):
             postgresql.bulk(results, settings.PG_PLATSANNONS_TABLE)
         if len(error_ids) > 0:
             error_ids_total.extend(error_ids)
+            log.error('Details batch. Could not load and save ad ids: %s' % error_ids)
 
         processed_ads_total = processed_ads_total + len(ad_batch)
 
         log.info('Processed %s/%s ads' % (processed_ads_total, len(ad_ids)))
 
-        if len(error_ids_total) > 0:
-            log.error('Could not load and save ad ids: %s' % error_ids_total)
+    if len(error_ids_total) > 0:
+        log.error('Total details batches. Could not load and save ad ids: %s' % error_ids_total)
 
 
 def is_bootstrap_ads(last_ts):

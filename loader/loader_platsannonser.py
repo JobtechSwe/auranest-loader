@@ -1,6 +1,7 @@
 import logging
 import requests
 import sys
+import time
 from multiprocessing import Value
 import concurrent.futures
 from loader import settings
@@ -53,6 +54,16 @@ def fetch_updated_ads(last_ts, exclude_ids):
     return distinct_items
 
 
+def clean_stringvalues(value):
+    if isinstance(value, dict):
+        value = {clean_stringvalues(k): clean_stringvalues(v) for k, v in value.items()}
+    elif isinstance(value, list):
+        value = [clean_stringvalues(v) for v in value]
+    elif isinstance(value, str):
+        value = ''.join([i if ord(i) > 0 else '' for i in value])
+    return value
+
+
 def fetch_ad_details(ad_id, ts, url):
     fail_count = 0
     detail_url = url + str(ad_id)
@@ -66,19 +77,26 @@ def fetch_ad_details(ad_id, ts, url):
                 ad['id'] = str(ad['annonsId'])
                 ad['updatedAt'] = ts
                 ad['expiresAt'] = ad['sistaPubliceringsdatum']
-                return ad
+                clean_ad = clean_stringvalues(ad)
+                return clean_ad
         except requests.exceptions.ConnectionError as e:
-            log.error("Unable to continue loading data from %s" % detail_url, e)
-            sys.exit(1)
+            fail_count += 1
+            log.error("Unable to load data from %s - Connection" % detail_url, e)
+            if fail_count >= 5:
+                log.error("Unable to continue loading data from %s - Connection" % detail_url, e)
+                sys.exit(1)
         except requests.exceptions.Timeout as e:
             fail_count += 1
-            log.error("Unable to load data from %s" % detail_url, e)
+            log.error("Unable to load data from %s - Timeout" % detail_url, e)
             if fail_count >= 5:
-                log.error("Unable to continue loading data from %s" % detail_url, e)
+                log.error("Unable to continue loading data from %s - Timeout" % detail_url, e)
                 sys.exit(1)
         except requests.exceptions.RequestException as e:
-            log.error("Unable to find data at %s, skipping" % detail_url, e)
-            raise e
+            fail_count += 1
+            time.sleep(0.3)
+            if fail_count >= 5:
+                log.error("Failed to fetch data at %s, skipping" % detail_url, e)
+                raise e
 
 
 def execute_calls(ad_datas, details_url, parallelism):
