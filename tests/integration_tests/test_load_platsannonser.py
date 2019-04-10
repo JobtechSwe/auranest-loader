@@ -124,6 +124,29 @@ def test_start_platsannonser():
     start_platsannonser()
 
 
+
+@pytest.mark.skip(reason="Temporarily disabled")
+@pytest.mark.integration
+def test_load_and_save_updated_ads():
+    print('============================', sys._getframe().f_code.co_name, '============================ ')
+    from loader.main import load_and_save_updated_ads
+    from loader.postgresql import table_exists, create_default_table
+    from loader import settings
+    table = settings.PG_PLATSANNONS_TABLE
+    if not table_exists(table):
+        create_default_table(table)
+
+    # last_ts = 1554735045341
+    # last_ids = ['8237223']
+
+    last_ts = 1554822753767
+    last_ids = ['22955068']
+
+    load_and_save_updated_ads(last_ts, last_ids)
+
+
+
+
 def get_dirty_ad():
     return {'annonsId': 23075723,
           'annonsrubrik': 'Tandläkare sökes till Degerfors',

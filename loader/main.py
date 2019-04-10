@@ -54,16 +54,42 @@ def get_system_status_platsannonser():
 
 def load_and_save_updated_ads(last_ts, last_ids):
     updated_ad_ids = loader_platsannonser.fetch_updated_ads(last_ts, last_ids)
-    log.info('Found %s ad ids to load...', len(updated_ad_ids))
+    log.info('Found %s updated ad ids to handle...', len(updated_ad_ids))
 
     while len(updated_ad_ids) > 0:
-        # Save found ads
-        fetch_details_and_save(updated_ad_ids)
+        update_removed_ads(updated_ad_ids)
+
+        updated_published_ad_ids = [ad for ad in updated_ad_ids if ad['avpublicerad'] is False]
+
+        if len(updated_published_ad_ids) > 0:
+            log.info('Found %s updated published ads' % len(updated_published_ad_ids))
+            # Save published ads
+            fetch_details_and_save(updated_published_ad_ids)
 
         # Check if there are more ads to fetch and save
         last_ids, last_ts = get_system_status_platsannonser()
         updated_ad_ids = loader_platsannonser.fetch_updated_ads(last_ts, last_ids)
-        log.info('Found %s ad ids to load...', len(updated_ad_ids))
+        log.info('Found %s updated ad ids to handle...', len(updated_ad_ids))
+
+
+def update_removed_ads(updated_ad_ids):
+    removed_ad_ids = [ad for ad in updated_ad_ids if ad['avpublicerad'] is True]
+    if len(removed_ad_ids) > 0:
+        log.info('Found %s removed ads' % len(removed_ad_ids))
+        for removed_ad_id in removed_ad_ids:
+            ad_id = removed_ad_id['annonsId']
+            ad_timestamp = removed_ad_id['uppdateradTid']
+            ad_to_update = postgresql.fetch_ad(ad_id, settings.PG_PLATSANNONS_TABLE)
+
+            if ad_to_update:
+                # print(ad_to_update)
+                doc = ad_to_update[1]
+                doc['avpublicerad'] = True
+                log.info('Updating removed ad id %s (timestamp: %s) in postgres' % (ad_id, ad_timestamp))
+                postgresql.update_ad(ad_id, doc, ad_timestamp, settings.PG_PLATSANNONS_TABLE)
+            else:
+                log.info('Could not find removed ad id %s (timestamp: %s) in postgres, skipping update' % (
+                    ad_id, ad_timestamp))
 
 
 def load_and_save_bootstrap_ads():
@@ -90,9 +116,11 @@ def fetch_details_and_save(ad_ids):
     for i, ad_batch in enumerate(ad_batches):
         log.info('Processing batch %s/%s' % (i + 1, nr_of_batches))
         ad_batch_ids = [ad_data for ad_data in ad_batch]
-        ad_details_data, error_ids = loader_platsannonser.execute_calls(ad_batch_ids, details_url,
-                                                                        parallelism=settings.LA_DETAILS_PARALLELISM)
-        results = list(ad_details_data.values())
+
+        ad_details, error_ids, not_found_ids = loader_platsannonser.execute_calls(ad_batch_ids,
+                                                           details_url,
+                                                           parallelism=settings.LA_DETAILS_PARALLELISM)
+        results = list(ad_details.values())
         if results:
             log.info('Bulking %s ads to postgres' % len(results))
             postgresql.bulk(results, settings.PG_PLATSANNONS_TABLE)
@@ -100,12 +128,25 @@ def fetch_details_and_save(ad_ids):
             error_ids_total.extend(error_ids)
             log.error('Details batch. Could not load and save ad ids: %s' % error_ids)
 
+        handle_not_found_ads(not_found_ids)
+
         processed_ads_total = processed_ads_total + len(ad_batch)
 
         log.info('Processed %s/%s ads' % (processed_ads_total, len(ad_ids)))
 
     if len(error_ids_total) > 0:
         log.error('Total details batches. Could not load and save ad ids: %s' % error_ids_total)
+
+
+def handle_not_found_ads(not_found_ids):
+    if len(not_found_ids) > 0:
+        ids_only = [id_data['annonsId'] for id_data in not_found_ids]
+        log.error(
+            'Details batch. Could not find %s ad ids. Updating following ids to removed: %s' % (len(not_found_ids),
+                                                                                                ids_only))
+        for removed_ad in not_found_ids:
+            removed_ad['avpublicerad'] = True
+        update_removed_ads(not_found_ids)
 
 
 def is_bootstrap_ads(last_ts):

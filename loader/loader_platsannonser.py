@@ -107,6 +107,7 @@ def execute_calls(ad_datas, details_url, parallelism):
     counter = Value('i', 0)
     result_output = {}
     error_ids = []
+    not_found_ids = []
     # with statement to ensure threads are cleaned up promptly
     with concurrent.futures.ThreadPoolExecutor(max_workers=parallelism) as executor:
         # Start the load operations
@@ -124,9 +125,19 @@ def execute_calls(ad_datas, details_url, parallelism):
                     counter.value += 1
                     if counter.value % 100 == 0:
                         log.info("Multithreaded fetch ad details - Processed %s docs" % (str(counter.value)))
+            except requests.exceptions.HTTPError as exc:
+                status_code = exc.response.status_code
+                error_message = 'Fetch ad details call generated an exception: %s' % (str(exc))
+                log.error(error_message)
+                if status_code == 404:
+                    # This exception will happen if the list of updated ads contains ads with 'avpublicerad' == false
+                    # even though the ad does not exist when trying to fetch the ad details (wrong status in the list).
+                    not_found_ids.append(input_data)
+                else:
+                    error_ids.append(input_data['annonsId'])
             except Exception as exc:
                 error_message = 'Fetch ad details call generated an exception: %s' % (str(exc))
                 log.error(error_message)
                 error_ids.append(input_data['annonsId'])
 
-    return result_output, error_ids
+    return result_output, error_ids, not_found_ids

@@ -91,6 +91,24 @@ def system_status(table):
     return {'last_timestamp': ts, 'last_ids': ids}
 
 
+def fetch_ad(ad_id, table):
+    cur = pg_conn.cursor()
+    cur.execute("SELECT * FROM " + table + " WHERE TRIM(id) = %s", [str(ad_id)])
+    result = cur.fetchone()
+    cur.close()
+    return result
+
+
+def update_ad(ad_id, doc, timestamp, table):
+    cur = pg_conn.cursor()
+    cur.execute("UPDATE " + table + " SET doc = %s, timestamp = %s WHERE TRIM(id) = %s", (json.dumps(doc),
+                                                                                          convert_to_timestamp(
+                                                                                              timestamp),
+                                                                                          str(ad_id)))
+    pg_conn.commit()
+    cur.close()
+
+
 def system_status_platsannonser(table):
     if not table_exists(table):
         create_default_table(table)
