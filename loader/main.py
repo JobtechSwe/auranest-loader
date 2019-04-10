@@ -118,8 +118,8 @@ def fetch_details_and_save(ad_ids):
         ad_batch_ids = [ad_data for ad_data in ad_batch]
 
         ad_details, error_ids, not_found_ids = loader_platsannonser.execute_calls(ad_batch_ids,
-                                                           details_url,
-                                                           parallelism=settings.LA_DETAILS_PARALLELISM)
+                                                                                  details_url,
+                                                                                  parallelism=settings.LA_DETAILS_PARALLELISM)
         results = list(ad_details.values())
         if results:
             log.info('Bulking %s ads to postgres' % len(results))
@@ -142,11 +142,14 @@ def handle_not_found_ads(not_found_ids):
     if len(not_found_ids) > 0:
         ids_only = [id_data['annonsId'] for id_data in not_found_ids]
         log.error(
-            'Details batch. Could not find %s ad ids. Updating following ids to removed: %s' % (len(not_found_ids),
-                                                                                                ids_only))
-        for removed_ad in not_found_ids:
-            removed_ad['avpublicerad'] = True
-        update_removed_ads(not_found_ids)
+            'Details batch. Could not find %s ad ids. Ids: %s' % (len(not_found_ids),
+                                                                  ids_only))
+        # log.error(
+        #     'Details batch. Could not find %s ad ids. Updating following ids to removed: %s' % (len(not_found_ids),
+        #                                                                                         ids_only))
+        # for removed_ad in not_found_ids:
+        #     removed_ad['avpublicerad'] = True
+        # update_removed_ads(not_found_ids)
 
 
 def is_bootstrap_ads(last_ts):
