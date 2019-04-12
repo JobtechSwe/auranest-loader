@@ -82,14 +82,24 @@ def update_removed_ads(updated_ad_ids):
             ad_to_update = postgresql.fetch_ad(ad_id, settings.PG_PLATSANNONS_TABLE)
 
             if ad_to_update:
-                # print(ad_to_update)
                 doc = ad_to_update[1]
                 doc['avpublicerad'] = True
+                get_and_set_removed_date(ad_id, ad_timestamp, doc)
+
                 log.info('Updating removed ad id %s (timestamp: %s) in postgres' % (ad_id, ad_timestamp))
                 postgresql.update_ad(ad_id, doc, ad_timestamp, settings.PG_PLATSANNONS_TABLE)
             else:
                 log.info('Could not find removed ad id %s (timestamp: %s) in postgres, skipping update' % (
                     ad_id, ad_timestamp))
+
+
+def get_and_set_removed_date(ad_id, ad_timestamp, doc):
+    try:
+        la_ad = loader_platsannonser.fetch_ad_details(ad_id, ad_timestamp, settings.LA_DETAILS_URL)
+        if la_ad and 'avpubliceringsdatum' in la_ad:
+            doc['avpubliceringsdatum'] = la_ad['avpubliceringsdatum']
+    except Exception:
+        log.info('Could not fetch LA-ad details for removed ad id %s.' % ad_id)
 
 
 def load_and_save_bootstrap_ads():
