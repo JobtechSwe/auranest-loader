@@ -16,8 +16,7 @@ def load_ad(ad_id, ts, results, index, url, expires_path, user, pwd):
             r.raise_for_status()
             ad = r.json()[0]
             if ad:
-                ad['updatedAt'] = ts
-                ad['expiresAt'] = _get_value_at(expires_path, ad)
+                ad = _rewrite_ad(ad, ts, expires_path)
                 results[index] = ad
                 break
         except requests.exceptions.RequestException as e:
@@ -26,6 +25,21 @@ def load_ad(ad_id, ts, results, index, url, expires_path, user, pwd):
             if fail_count > 10:
                 log.error("Unable to continue loading data from %s" % url, e)
                 sys.exit(1)
+
+
+# Formats ad for conformity
+def _rewrite_ad(ad, updatedAt, expires_path):
+    ad = _lower_key(ad)
+    ad['updatedAt'] = updatedAt
+    ad['expiresAt'] = _get_value_at(expires_path, ad)
+    return ad
+
+
+# Makes first character of key in dictionary lowecase
+def _lower_key(value):
+    if isinstance(value, dict):
+        return {k[:1].lower()+k[1:]: _lower_key(v) for k, v in value.items()}
+    return value
 
 
 def _get_value_at(path, data):
