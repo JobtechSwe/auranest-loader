@@ -81,13 +81,13 @@ def fetch_ad_details(ad_id, ts, url):
                 return clean_ad
         except requests.exceptions.ConnectionError as e:
             fail_count += 1
-            log.error("Unable to load data from %s - Connection" % detail_url, e)
+            log.warning("Unable to load data from %s - Connection" % detail_url)
             if fail_count >= 5:
                 log.error("Unable to continue loading data from %s - Connection" % detail_url, e)
                 sys.exit(1)
         except requests.exceptions.Timeout as e:
             fail_count += 1
-            log.error("Unable to load data from %s - Timeout" % detail_url, e)
+            log.warning("Unable to load data from %s - Timeout" % detail_url)
             if fail_count >= 5:
                 log.error("Unable to continue loading data from %s - Timeout" % detail_url, e)
                 sys.exit(1)
