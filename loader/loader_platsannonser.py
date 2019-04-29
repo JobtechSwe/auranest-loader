@@ -29,7 +29,8 @@ def fetch_bootstrap_ads():
 
 
 def is_ad_included(ad_id_item, last_ts, exclude_ids):
-    if ad_id_item['uppdateradTid'] == last_ts and str(ad_id_item['annonsId']) in exclude_ids:
+    if ad_id_item['uppdateradTid'] == last_ts and \
+            str(ad_id_item['annonsId']) in exclude_ids:
         return False
     else:
         return True
@@ -47,7 +48,8 @@ def fetch_updated_ads(last_ts, exclude_ids):
         json_result = r.json()
         if json_result and 'idLista' in json_result:
             items = json_result['idLista']
-            distinct_items = list({v['annonsId']: v for v in items if is_ad_included(v, last_ts, exclude_ids)}.values())
+            distinct_items = list({v['annonsId']: v for v in items
+                                   if is_ad_included(v, last_ts, exclude_ids)}.values())
     except requests.exceptions.RequestException as e:
         log.error("Failed to read from %s" % feed_url, e)
 
@@ -83,13 +85,15 @@ def fetch_ad_details(ad_id, ts, url):
             fail_count += 1
             log.warning("Unable to load data from %s - Connection" % detail_url)
             if fail_count >= 5:
-                log.error("Unable to continue loading data from %s - Connection" % detail_url, e)
+                log.error("Unable to continue loading data from %s - Connection" %
+                          detail_url, e)
                 sys.exit(1)
         except requests.exceptions.Timeout as e:
             fail_count += 1
             log.warning("Unable to load data from %s - Timeout" % detail_url)
             if fail_count >= 5:
-                log.error("Unable to continue loading data from %s - Timeout" % detail_url, e)
+                log.error("Unable to continue loading data from %s - Timeout" %
+                          detail_url, e)
                 sys.exit(1)
         except requests.exceptions.RequestException as e:
             fail_count += 1
@@ -112,7 +116,8 @@ def execute_calls(ad_datas, details_url, parallelism):
     with concurrent.futures.ThreadPoolExecutor(max_workers=parallelism) as executor:
         # Start the load operations
         future_to_fetch_result = {
-            executor.submit(fetch_ad_details, ad_data['annonsId'], ad_data['uppdateradTid'], details_url): ad_data for
+            executor.submit(fetch_ad_details, ad_data['annonsId'],
+                            ad_data['uppdateradTid'], details_url): ad_data for
             ad_data in ad_datas}
         for future in concurrent.futures.as_completed(future_to_fetch_result):
             input_data = future_to_fetch_result[future]
@@ -124,19 +129,23 @@ def execute_calls(ad_datas, details_url, parallelism):
                     # log.info('Counter: %s' % counter.value)
                     counter.value += 1
                     if counter.value % 100 == 0:
-                        log.info("Multithreaded fetch ad details - Processed %s docs" % (str(counter.value)))
+                        log.info("Multithreaded fetch ad details - Processed %s docs" %
+                                 (str(counter.value)))
             except requests.exceptions.HTTPError as exc:
                 status_code = exc.response.status_code
-                error_message = 'Fetch ad details call generated an exception: %s' % (str(exc))
+                error_message = 'Fetch ad details call generated an exception: %s' % \
+                    (str(exc))
                 log.error(error_message)
                 if status_code == 404:
-                    # This exception will happen if the list of updated ads contains ads with 'avpublicerad' == false
-                    # even though the ad does not exist when trying to fetch the ad details (wrong status in the list).
+                    # This exception will happen if the list of updated ads contains ads
+                    # with 'avpublicerad' == false even though the ad does not exist when
+                    # trying to fetch the ad details (wrong status in the list).
                     not_found_ids.append(input_data)
                 else:
                     error_ids.append(input_data['annonsId'])
             except Exception as exc:
-                error_message = 'Fetch ad details call generated an exception: %s' % (str(exc))
+                error_message = 'Fetch ad details call generated an exception: %s' % \
+                    (str(exc))
                 log.error(error_message)
                 error_ids.append(input_data['annonsId'])
 
