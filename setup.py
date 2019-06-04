@@ -13,6 +13,7 @@ setup(
         'console_scripts': [
             'load-auranest = loader.main:start_auranest',
             'load-platsannonser = loader.main:start_platsannonser',
+            'bootstrap-platsannonser = loader.main:bootstrap_platsannonser'
         ],
     },
 )

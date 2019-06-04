@@ -144,11 +144,12 @@ def bulk(items, table):
                                                  "SET timestamp = %s, expires = %s, doc = %s", adapted_items)
         bulk_conn.commit()
 
-        cur.close()
-        bulk_conn.close()
     except psycopg2.DatabaseError as e:
         log.error('Could not bulk insert in database', e)
         sys.exit(1)
+    finally:
+        cur.close()
+        bulk_conn.close()
 
     elapsed_time = time.time() - start_time
 

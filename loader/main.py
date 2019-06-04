@@ -40,8 +40,11 @@ def start_platsannonser():
         # Initial load from empty database
         load_and_save_bootstrap_ads()
         last_ids, last_ts = get_system_status_platsannonser()
-
     load_and_save_updated_ads(last_ts, last_ids)
+
+
+def bootstrap_platsannonser():
+    load_and_save_bootstrap_ads()
 
 
 def get_system_status_platsannonser():
