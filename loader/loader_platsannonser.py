@@ -68,10 +68,10 @@ def clean_stringvalues(value):
 
 def fetch_ad_details(ad_id, ts, url):
     fail_count = 0
+    fail_max = 10
     detail_url = url + str(ad_id)
     while True:
         try:
-
             r = requests.get(detail_url, timeout=60)
             r.raise_for_status()
             ad = r.json()
@@ -83,22 +83,26 @@ def fetch_ad_details(ad_id, ts, url):
                 return clean_ad
         except requests.exceptions.ConnectionError as e:
             fail_count += 1
-            log.warning("Unable to load data from %s - Connection" % detail_url)
-            if fail_count >= 5:
+            time.sleep(0.3)
+            log.warning("Unable to load data from %s - Connection error" % detail_url)
+            if fail_count >= fail_max:
                 log.error("Unable to continue loading data from %s - Connection" %
                           detail_url, e)
                 sys.exit(1)
         except requests.exceptions.Timeout as e:
             fail_count += 1
+            time.sleep(0.3)
             log.warning("Unable to load data from %s - Timeout" % detail_url)
-            if fail_count >= 5:
+            if fail_count >= fail_max:
                 log.error("Unable to continue loading data from %s - Timeout" %
                           detail_url, e)
                 sys.exit(1)
         except requests.exceptions.RequestException as e:
             fail_count += 1
             time.sleep(0.3)
-            if fail_count >= 5:
+            log.warning("Unable to load data from %s - Other" % detail_url)
+            log.warning(e)
+            if fail_count >= fail_max:
                 log.error("Failed to fetch data at %s, skipping" % detail_url, e)
                 raise e
 
