@@ -118,9 +118,10 @@ def fix_incorrect_ads(last_ts):
     bootstrap_ad_ids = loader_platsannonser.fetch_bootstrap_ads()
     if bootstrap_ad_ids:
         check_ids = [str(id['annonsId']) for id in bootstrap_ad_ids]
-        expired_ads = postgresql.fetch_expired_ads(check_ids, settings.PG_PLATSANNONS_TABLE, last_ts)
+        # expired_ads = postgresql.fetch_expired_ads(check_ids, settings.PG_PLATSANNONS_TABLE, last_ts)
+        expired_ads = []
         missing_ads = postgresql.check_missing_ads(check_ids, settings.PG_PLATSANNONS_TABLE)
-        log.info(f"Updating {len(expired_ads)} that have been unpublished and {len(missing_ads)} that are missing.")
+        log.info(f"Updating {len(missing_ads)} that are missing.")
         update_ads = expired_ads + missing_ads
         if update_ads:
             update_ads_with_ts = [{'annonsId': id, 'uppdateradTid': last_ts} for id in update_ads]
