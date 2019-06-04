@@ -99,6 +99,39 @@ def fetch_ad(ad_id, table):
     return result
 
 
+def fetch_expired_ads(ad_id_list, table, last_ts):
+    try:
+        ad_ids = tuple(ad_id_list)
+        pg_conn = get_new_pg_conn()
+        cur = pg_conn.cursor()
+        sql_missing = (f"SELECT id FROM {table} WHERE expires > {last_ts} and doc @> '{{\"avpublicerad\": false}}' and TRIM(id) not in %s")
+        cur.execute(sql_missing, (ad_ids,))
+        result = cur.fetchall()
+        return [id[0] for id in result]
+    except psycopg2.DatabaseError as e:
+        log.error(e)
+    finally:
+        cur.close()
+        pg_conn.close()
+
+
+def check_missing_ads(ad_id_list, table):
+    try:
+        pg_conn = get_new_pg_conn()
+        cur = pg_conn.cursor()
+        ad_ids = tuple(ad_id_list)
+        sql = f"SELECT id FROM {table} WHERE TRIM(id) in %s"
+        cur.execute(sql, (ad_ids,))
+        result = cur.fetchall()
+        found_ids = [id[0] for id in result]
+        return list(set(ad_id_list)-set(found_ids))
+    except psycopg2.DatabaseError as e:
+        log.error(e)
+    finally:
+        cur.close()
+        pg_conn.close()
+
+
 def update_ad(ad_id, doc, timestamp, table):
     cur = pg_conn.cursor()
     cur.execute("UPDATE " + table + " SET doc = %s, timestamp = %s WHERE TRIM(id) = %s", (json.dumps(doc),
