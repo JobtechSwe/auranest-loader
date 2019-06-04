@@ -7,7 +7,7 @@ PG_USER = os.getenv('PG_USER')
 PG_PASSWORD = os.getenv('PG_PASSWORD')
 PG_BATCH_SIZE = os.getenv('PG_BATCH_SIZE', 2000)
 PG_AURANEST_TABLE = os.getenv('PG_AURANEST_TABLE', 'auranest')
-PG_PLATSANNONS_TABLE = os.getenv('PG_PLATSANNONS_TABLE', 'platsannonser')
+PG_PLATSANNONS_TABLE = os.getenv('PG_PLATSANNONS_TABLE', 'platsannons_la')
 PG_SSLMODE = os.getenv('PG_SSLMODE', 'require')
 
 AURANEST_FEED_URL = os.getenv('AURANEST_FEED_URL')
