@@ -40,8 +40,13 @@ def start_platsannonser():
         # Initial load from empty database
         load_and_save_bootstrap_ads()
         last_ids, last_ts = get_system_status_platsannonser()
-
     load_and_save_updated_ads(last_ts, last_ids)
+    _, last_ts = get_system_status_platsannonser()
+    fix_incorrect_ads(last_ts)
+
+
+def bootstrap_platsannonser():
+    load_and_save_bootstrap_ads()
 
 
 def get_system_status_platsannonser():
@@ -106,6 +111,21 @@ def load_and_save_bootstrap_ads():
     bootstrap_ad_ids = loader_platsannonser.fetch_bootstrap_ads()
     if bootstrap_ad_ids:
         fetch_details_and_save(bootstrap_ad_ids)
+
+
+def fix_incorrect_ads(last_ts):
+    log.info("Checking if ads are missing or expired")
+    bootstrap_ad_ids = loader_platsannonser.fetch_bootstrap_ads()
+    if bootstrap_ad_ids:
+        check_ids = [str(id['annonsId']) for id in bootstrap_ad_ids]
+        # expired_ads = postgresql.fetch_expired_ads(check_ids, settings.PG_PLATSANNONS_TABLE, last_ts)
+        expired_ads = []
+        missing_ads = postgresql.check_missing_ads(check_ids, settings.PG_PLATSANNONS_TABLE)
+        log.info(f"Updating {len(missing_ads)} that are missing.")
+        update_ads = expired_ads + missing_ads
+        if update_ads:
+            update_ads_with_ts = [{'annonsId': id, 'uppdateradTid': last_ts} for id in update_ads]
+            fetch_details_and_save(update_ads_with_ts)
 
 
 def grouper(n, iterable):
