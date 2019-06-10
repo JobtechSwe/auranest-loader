@@ -30,6 +30,7 @@ pipeline {
         stage('Change Cronjob Image'){
             steps{
                 sh "oc patch cronjobs/jobtechjobs-loader --type=json -p='[{\"op\":\"replace\", \"path\": \"/spec/jobTemplate/spec/template/spec/containers/0/image\", \"value\":\"docker-registry.default.svc:5000/${openshiftProject}/'${buildName}':${buildTag}\"}]' -n ${openshiftProject}"
+                sh "oc patch cronjobs/platsannonser-loader --type=json -p='[{\"op\":\"replace\", \"path\": \"/spec/jobTemplate/spec/template/spec/containers/0/image\", \"value\":\"docker-registry.default.svc:5000/${openshiftProject}/'${buildName}':${buildTag}\"}]' -n ${openshiftProject}"
             }
         }
     }

@@ -41,8 +41,8 @@ def start_platsannonser():
         load_and_save_bootstrap_ads()
         last_ids, last_ts = get_system_status_platsannonser()
     load_and_save_updated_ads(last_ts, last_ids)
-    _, last_ts = get_system_status_platsannonser()
-    fix_incorrect_ads(last_ts)
+    # _, last_ts = get_system_status_platsannonser()
+    # fix_incorrect_ads(last_ts)
 
 
 def bootstrap_platsannonser():
@@ -64,7 +64,8 @@ def load_and_save_updated_ads(last_ts, last_ids):
     while len(updated_ad_ids) > 0:
         update_removed_ads(updated_ad_ids)
 
-        updated_published_ad_ids = [ad for ad in updated_ad_ids if ad['avpublicerad'] is False]
+        updated_published_ad_ids = [ad for ad in updated_ad_ids
+                                    if ad['avpublicerad'] is False]
 
         if len(updated_published_ad_ids) > 0:
             log.info('Found %s updated published ads' % len(updated_published_ad_ids))
@@ -91,16 +92,20 @@ def update_removed_ads(updated_ad_ids):
                 doc['avpublicerad'] = True
                 get_and_set_removed_date(ad_id, ad_timestamp, doc)
 
-                log.info('Updating removed ad id %s (timestamp: %s) in postgres' % (ad_id, ad_timestamp))
-                postgresql.update_ad(ad_id, doc, ad_timestamp, settings.PG_PLATSANNONS_TABLE)
+                log.info('Updating removed ad id %s (timestamp: %s) in postgres'
+                         % (ad_id, ad_timestamp))
+                postgresql.update_ad(ad_id, doc, ad_timestamp,
+                                     settings.PG_PLATSANNONS_TABLE)
             else:
-                log.info('Could not find removed ad id %s (timestamp: %s) in postgres, skipping update' % (
-                    ad_id, ad_timestamp))
+                log.info('Could not find removed ad id %s (timestamp: %s) '
+                         'in postgres, skipping update' % (
+                             ad_id, ad_timestamp))
 
 
 def get_and_set_removed_date(ad_id, ad_timestamp, doc):
     try:
-        la_ad = loader_platsannonser.fetch_ad_details(ad_id, ad_timestamp, settings.LA_DETAILS_URL)
+        la_ad = loader_platsannonser.fetch_ad_details(ad_id, ad_timestamp,
+                                                      settings.LA_DETAILS_URL)
         if la_ad and 'avpubliceringsdatum' in la_ad:
             doc['avpubliceringsdatum'] = la_ad['avpubliceringsdatum']
     except Exception:
@@ -110,22 +115,29 @@ def get_and_set_removed_date(ad_id, ad_timestamp, doc):
 def load_and_save_bootstrap_ads():
     bootstrap_ad_ids = loader_platsannonser.fetch_bootstrap_ads()
     if bootstrap_ad_ids:
+        log.info("Setting all ads as expired")
+        postgresql.set_all_expired(settings.PG_PLATSANNONS_TABLE)
+        log.info("Updating retrieved ads.")
         fetch_details_and_save(bootstrap_ad_ids)
 
 
-def fix_incorrect_ads(last_ts):
-    log.info("Checking if ads are missing or expired")
-    bootstrap_ad_ids = loader_platsannonser.fetch_bootstrap_ads()
-    if bootstrap_ad_ids:
-        check_ids = [str(id['annonsId']) for id in bootstrap_ad_ids]
-        # expired_ads = postgresql.fetch_expired_ads(check_ids, settings.PG_PLATSANNONS_TABLE, last_ts)
-        expired_ads = []
-        missing_ads = postgresql.check_missing_ads(check_ids, settings.PG_PLATSANNONS_TABLE)
-        log.info(f"Updating {len(missing_ads)} that are missing.")
-        update_ads = expired_ads + missing_ads
-        if update_ads:
-            update_ads_with_ts = [{'annonsId': id, 'uppdateradTid': last_ts} for id in update_ads]
-            fetch_details_and_save(update_ads_with_ts)
+# def fix_incorrect_ads(last_ts):
+#     log.info("Checking if ads are missing or expired")
+#     bootstrap_ad_ids = loader_platsannonser.fetch_bootstrap_ads()
+#     if bootstrap_ad_ids:
+#         check_ids = [str(id['annonsId']) for id in bootstrap_ad_ids]
+#         # expired_ads = postgresql.fetch_expired_ads(check_ids,
+#                                                      settings.PG_PLATSANNONS_TABLE,
+#                                                      last_ts)
+#         expired_ads = []
+#         missing_ads = postgresql.check_missing_ads(check_ids,
+#                                                    settings.PG_PLATSANNONS_TABLE)
+#         log.info(f"Updating {len(missing_ads)} that are missing.")
+#         update_ads = expired_ads + missing_ads
+#         if update_ads:
+#             update_ads_with_ts = [{'annonsId': id, 'uppdateradTid': last_ts}
+#                                   for id in update_ads]
+#             fetch_details_and_save(update_ads_with_ts)
 
 
 def grouper(n, iterable):
@@ -147,12 +159,17 @@ def fetch_details_and_save(ad_ids):
         log.info('Processing batch %s/%s' % (i + 1, nr_of_batches))
         ad_batch_ids = [ad_data for ad_data in ad_batch]
 
-        ad_details, error_ids, not_found_ids = loader_platsannonser.execute_calls(ad_batch_ids,
-                                                                                  details_url,
-                                                                                  parallelism=settings.LA_DETAILS_PARALLELISM)
+        parallelism = settings.LA_DETAILS_PARALLELISM
+
+        (ad_details,
+         error_ids,
+         not_found_ids) = loader_platsannonser.execute_calls(ad_batch_ids,
+                                                             details_url,
+                                                             parallelism=parallelism)
         results = list(ad_details.values())
         if results:
-            log.info('Bulking %s ads to postgres' % len(results))
+            log.info('Bulking %s ads to postgres, table: %s'
+                     % (len(results), settings.PG_PLATSANNONS_TABLE))
             postgresql.bulk(results, settings.PG_PLATSANNONS_TABLE)
         if len(error_ids) > 0:
             error_ids_total.extend(error_ids)
@@ -165,7 +182,8 @@ def fetch_details_and_save(ad_ids):
         log.info('Processed %s/%s ads' % (processed_ads_total, len(ad_ids)))
 
     if len(error_ids_total) > 0:
-        log.error('Total details batches. Could not load and save ad ids: %s' % error_ids_total)
+        log.error('Total details batches. Could not load and save ad ids: %s'
+                  % error_ids_total)
 
 
 def handle_not_found_ads(not_found_ids):
@@ -174,12 +192,6 @@ def handle_not_found_ads(not_found_ids):
         log.error(
             'Details batch. Could not find %s ad ids. Ids: %s' % (len(not_found_ids),
                                                                   ids_only))
-        # log.error(
-        #     'Details batch. Could not find %s ad ids. Updating following ids to removed: %s' % (len(not_found_ids),
-        #                                                                                         ids_only))
-        # for removed_ad in not_found_ids:
-        #     removed_ad['avpublicerad'] = True
-        # update_removed_ads(not_found_ids)
 
 
 def is_bootstrap_ads(last_ts):
