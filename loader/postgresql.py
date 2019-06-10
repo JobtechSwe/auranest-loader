@@ -60,7 +60,8 @@ def table_exists(table):
 def create_default_table(table):
     statements = (
         "CREATE TABLE {table} (id VARCHAR(64) PRIMARY KEY, doc JSONB, "
-        "timestamp BIGINT, expires BIGINT)".format(table=table),
+        "timestamp BIGINT, expires BIGINT, "
+        "expired boolean NOT NULL DEFAULT false)".format(table=table),
         "CREATE INDEX {table}_timestamp_idx ON {table} (timestamp)".format(table=table),
         "CREATE INDEX {table}_expires_idx ON {table} (expires)".format(table=table),
     )
@@ -104,7 +105,12 @@ def fetch_expired_ads(ad_id_list, table, last_ts):
         ad_ids = tuple(ad_id_list)
         pg_conn = get_new_pg_conn()
         cur = pg_conn.cursor()
-        sql_missing = (f"SELECT id FROM {table} WHERE expires > {last_ts} and doc @> '{{\"avpublicerad\": false}}' and TRIM(id) not in %s")
+        sql_missing = (f"SELECT id FROM {table}" +
+                       f" WHERE expires > {last_ts}" +
+                       f" AND doc @> '{{\"avpublicerad\": false}}'" +
+                       f" AND TRIM(id) not in %s")
+        print(sql_missing)
+        print(sql_missing)
         cur.execute(sql_missing, (ad_ids,))
         result = cur.fetchall()
         return [id[0] for id in result]
@@ -134,10 +140,19 @@ def check_missing_ads(ad_id_list, table):
 
 def update_ad(ad_id, doc, timestamp, table):
     cur = pg_conn.cursor()
-    cur.execute("UPDATE " + table + " SET doc = %s, timestamp = %s WHERE TRIM(id) = %s", (json.dumps(doc),
-                                                                                          convert_to_timestamp(
-                                                                                              timestamp),
-                                                                                          str(ad_id)))
+    cur.execute("UPDATE " +
+                table +
+                " SET doc = %s, timestamp = %s WHERE TRIM(id) = %s",
+                (json.dumps(doc),
+                 convert_to_timestamp(timestamp),
+                 str(ad_id)))
+    pg_conn.commit()
+    cur.close()
+
+
+def set_all_expired(table):
+    cur = pg_conn.cursor()
+    cur.execute("UPDATE " + table + " SET expired = %s", [True])
     pg_conn.commit()
     cur.close()
 
@@ -169,14 +184,16 @@ def bulk(items, table):
                       json.dumps(item),
                       convert_to_timestamp(item['updatedAt']),
                       convert_to_timestamp(item.get('expiresAt')),
-                      json.dumps(item)) for item in items if item]
+                      json.dumps(item), False) for item in items if item]
     try:
         bulk_conn = get_new_pg_conn()
         cur = bulk_conn.cursor()
-        cur.executemany("INSERT INTO " + table + " "
-                                                 "(id, timestamp, expires, doc) VALUES (%s, %s, %s, %s) "
-                                                 "ON CONFLICT (id) DO UPDATE "
-                                                 "SET timestamp = %s, expires = %s, doc = %s", adapted_items)
+        cur.executemany("INSERT INTO " +
+                        table + " "
+                        "(id, timestamp, expires, doc) VALUES (%s, %s, %s, %s) "
+                        "ON CONFLICT (id) DO UPDATE "
+                        "SET timestamp = %s, expires = %s, doc = %s, expired = %s",
+                        adapted_items)
         bulk_conn.commit()
 
     except psycopg2.DatabaseError as e:
