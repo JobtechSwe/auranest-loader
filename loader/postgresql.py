@@ -109,8 +109,6 @@ def fetch_expired_ads(ad_id_list, table, last_ts):
                        f" WHERE expires > {last_ts}" +
                        f" AND doc @> '{{\"avpublicerad\": false}}'" +
                        f" AND TRIM(id) not in %s")
-        print(sql_missing)
-        print(sql_missing)
         cur.execute(sql_missing, (ad_ids,))
         result = cur.fetchall()
         return [id[0] for id in result]
