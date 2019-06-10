@@ -152,7 +152,7 @@ def fetch_details_and_save(ad_ids):
                                                                                   parallelism=settings.LA_DETAILS_PARALLELISM)
         results = list(ad_details.values())
         if results:
-            log.info('Bulking %s ads to postgres' % len(results))
+            log.info('Bulking %s ads to postgres, table: %s' % (len(results), settings.PG_PLATSANNONS_TABLE))
             postgresql.bulk(results, settings.PG_PLATSANNONS_TABLE)
         if len(error_ids) > 0:
             error_ids_total.extend(error_ids)

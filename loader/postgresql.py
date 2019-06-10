@@ -161,6 +161,8 @@ def system_status_platsannonser(table):
 
 def bulk(items, table):
     start_time = time.time()
+    if not table_exists(table):
+        create_default_table(table)
     adapted_items = [(item['id'].strip(),
                       convert_to_timestamp(item['updatedAt']),
                       convert_to_timestamp(item.get('expiresAt')),
