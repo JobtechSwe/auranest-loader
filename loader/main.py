@@ -60,7 +60,6 @@ def get_system_status_platsannonser():
 def load_and_save_updated_ads(last_ts, last_ids):
     updated_ad_ids = loader_platsannonser.fetch_updated_ads(last_ts, last_ids)
     log.info('Found %s updated ad ids to handle...', len(updated_ad_ids))
-
     while len(updated_ad_ids) > 0:
         update_removed_ads(updated_ad_ids)
 
@@ -73,9 +72,15 @@ def load_and_save_updated_ads(last_ts, last_ids):
             fetch_details_and_save(updated_published_ad_ids)
 
         # Check if there are more ads to fetch and save
-        last_ids, last_ts = get_system_status_platsannonser()
-        updated_ad_ids = loader_platsannonser.fetch_updated_ads(last_ts, last_ids)
-        log.info('Found %s updated ad ids to handle...', len(updated_ad_ids))
+        last_ids_temp, last_ts_temp = get_system_status_platsannonser()
+        if set(last_ids) == set(last_ids_temp) and last_ts == last_ts_temp:
+            log.info("Same ids and timestamps as last try, aborting.")
+            updated_ad_ids = []
+        else:
+            last_ts = last_ts_temp
+            last_ids = last_ids_temp
+            updated_ad_ids = loader_platsannonser.fetch_updated_ads(last_ts, last_ids)
+            log.info('Found %s updated ad ids to handle...', len(updated_ad_ids))
 
 
 def update_removed_ads(updated_ad_ids):
