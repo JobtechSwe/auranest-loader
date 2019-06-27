@@ -78,7 +78,7 @@ def load_and_save_updated_ads(last_ts, last_ids):
             updated_ad_ids = []
         else:
             last_ts = last_ts_temp
-            last_ids = last_ids_temp
+            last_ids = last_ids_temp.copy()
             updated_ad_ids = loader_platsannonser.fetch_updated_ads(last_ts, last_ids)
             log.info('Found %s updated ad ids to handle...', len(updated_ad_ids))
 
