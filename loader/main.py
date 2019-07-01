@@ -6,7 +6,7 @@ from jobtech.common.customlogging import configure_logging
 from loader import loader, loader_platsannonser, settings
 from loader import postgresql
 
-configure_logging()
+configure_logging([__name__.split('.')[0], 'jobtech'])
 log = logging.getLogger(__name__)
 
 
