@@ -1,3 +1,4 @@
 requests
 psycopg2-binary
 pytest-envfiles
+git+https://github.com/JobtechSwe/jobtech-common.git

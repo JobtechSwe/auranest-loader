@@ -2,10 +2,11 @@ import logging
 import sys
 import itertools
 import math
+from jobtech.common.customlogging import configure_logging
 from loader import loader, loader_platsannonser, settings
 from loader import postgresql
 
-logging.basicConfig(level=logging.INFO)
+configure_logging()
 log = logging.getLogger(__name__)
 
 
