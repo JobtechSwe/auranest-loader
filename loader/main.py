@@ -179,7 +179,7 @@ def fetch_details_and_save(ad_ids):
             postgresql.bulk(results, settings.PG_PLATSANNONS_TABLE)
         if len(error_ids) > 0:
             error_ids_total.extend(error_ids)
-            log.error('Details batch. Could not load and save ad ids: %s' % error_ids)
+            log.error('Details batch. Could not load and save data for ad ids: %s' % error_ids)
 
         handle_not_found_ads(not_found_ids)
 
@@ -188,8 +188,12 @@ def fetch_details_and_save(ad_ids):
         log.info('Processed %s/%s ads' % (processed_ads_total, len(ad_ids)))
 
     if len(error_ids_total) > 0:
-        log.error('Total details batches. Could not load and save ad ids: %s'
+        log.error('Total details batches. Could not load and save data for ad ids: %s '
+                  '- Expired flag still set to False for these ids '
+                  'to prevent accidental removal'
                   % error_ids_total)
+        postgresql.set_expired_for_ids(settings.PG_PLATSANNONS_TABLE, error_ids_total, expired=False)
+
 
 
 def handle_not_found_ads(not_found_ids):
