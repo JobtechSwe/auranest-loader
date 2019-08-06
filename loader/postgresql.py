@@ -154,6 +154,14 @@ def set_all_expired(table):
     pg_conn.commit()
     cur.close()
 
+def set_expired_for_ids(table, ad_ids, expired=True):
+    cur = pg_conn.cursor()
+    for ad_id in ad_ids:
+        cur.execute("UPDATE " + table + " SET expired = %s WHERE id = %s", [expired, str(ad_id)])
+    pg_conn.commit()
+    cur.close()
+
+
 
 def system_status_platsannonser(table):
     if not table_exists(table):
