@@ -100,7 +100,6 @@ def fetch_ad_details(ad_id, ts, url):
         except requests.exceptions.RequestException as e:
             fail_count += 1
             time.sleep(0.3)
-            log.warning("Unable to load data from %s - Other" % detail_url)
             log.warning(e)
             if fail_count >= fail_max:
                 log.error("Failed to fetch data at %s, skipping" % detail_url, e)
