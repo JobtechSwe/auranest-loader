@@ -219,6 +219,8 @@ if __name__ == '__main__':
         start_auranest()
     elif sys.argv[1] == 'platsannonser':
         start_platsannonser()
+    elif sys.argv[1] == 'bootstrap_platsannonser':
+        bootstrap_platsannonser()
     else:
         print("Unknown dataset: %s" % sys.argv[1])
         sys.exit(1)

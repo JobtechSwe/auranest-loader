@@ -149,10 +149,14 @@ def update_ad(ad_id, doc, timestamp, table):
 
 
 def set_all_expired(table):
+    if not table_exists(table):
+        create_default_table(table)
+        return
     cur = pg_conn.cursor()
     cur.execute("UPDATE " + table + " SET expired = %s", [True])
     pg_conn.commit()
     cur.close()
+
 
 def set_expired_for_ids(table, ad_ids, expired=True):
     cur = pg_conn.cursor()
@@ -160,7 +164,6 @@ def set_expired_for_ids(table, ad_ids, expired=True):
         cur.execute("UPDATE " + table + " SET expired = %s WHERE id = %s", [expired, str(ad_id)])
     pg_conn.commit()
     cur.close()
-
 
 
 def system_status_platsannonser(table):
