@@ -85,7 +85,7 @@ def fetch_ad_details(ad_id, ts, url):
                         len(ad.get('organisationsnummer', '').strip()) > 9:
                     orgnr = ad['organisationsnummer']
                     significate_number_position = 4 if len(orgnr) == 12 else 2
-                    if int(orgnr[significate_number_position]) < 1:
+                    if int(orgnr[significate_number_position]) < 2:
                         ad['organisationsnummer'] = None
                 clean_ad = clean_stringvalues(ad)
                 return clean_ad
