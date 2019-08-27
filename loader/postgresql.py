@@ -235,10 +235,11 @@ def convert_to_timestamp(date):
 
         try:
             ts = time.mktime(time.strptime(date, dateformat)) * 1000
-            log.debug("Converted date %s to %d" % (date, ts))
+            # log.debug("Converted date %s to %d" % (date, ts))
             break
         except ValueError as e:
-            log.debug("Failed to convert date %s" % date, e)
+            # log.debug("Failed to convert date %s" % date, e)
+            pass
 
     return int(ts)
 
