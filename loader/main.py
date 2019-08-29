@@ -158,7 +158,7 @@ def fetch_details_and_save(ad_ids):
             log.info('Bulking %s ads to postgres, table: %s'
                      % (len(results), settings.PG_PLATSANNONS_TABLE))
             postgresql.bulk(results, settings.PG_PLATSANNONS_TABLE)
-            log.debug(f'Postgresql bulked ads (id, updatedAt): {", ".join(("(id: " + str(ad["annonsId"]) + ", updatedAt: " + str(ad["updatedAt"])) + ")" for ad in results)}')
+            log.debug(f'Postgresql bulked ads (id, updatedAt): {", ".join(("(" + str(ad["annonsId"]) + ", " + str(ad["updatedAt"])) + ")" for ad in results)}')
         if len(error_ids) > 0:
             error_ids_total.extend(error_ids)
             log.error('Details batch. Could not load and save data for ad ids: %s' % error_ids)
