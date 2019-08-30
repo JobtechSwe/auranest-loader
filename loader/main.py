@@ -127,25 +127,6 @@ def load_and_save_bootstrap_ads():
         fetch_details_and_save(bootstrap_ad_ids)
 
 
-# def fix_incorrect_ads(last_ts):
-#     log.info("Checking if ads are missing or expired")
-#     bootstrap_ad_ids = loader_platsannonser.fetch_bootstrap_ads()
-#     if bootstrap_ad_ids:
-#         check_ids = [str(id['annonsId']) for id in bootstrap_ad_ids]
-#         # expired_ads = postgresql.fetch_expired_ads(check_ids,
-#                                                      settings.PG_PLATSANNONS_TABLE,
-#                                                      last_ts)
-#         expired_ads = []
-#         missing_ads = postgresql.check_missing_ads(check_ids,
-#                                                    settings.PG_PLATSANNONS_TABLE)
-#         log.info(f"Updating {len(missing_ads)} that are missing.")
-#         update_ads = expired_ads + missing_ads
-#         if update_ads:
-#             update_ads_with_ts = [{'annonsId': id, 'uppdateradTid': last_ts}
-#                                   for id in update_ads]
-#             fetch_details_and_save(update_ads_with_ts)
-
-
 def grouper(n, iterable):
     iterable = iter(iterable)
     return iter(lambda: list(itertools.islice(iterable, n)), [])
@@ -177,6 +158,7 @@ def fetch_details_and_save(ad_ids):
             log.info('Bulking %s ads to postgres, table: %s'
                      % (len(results), settings.PG_PLATSANNONS_TABLE))
             postgresql.bulk(results, settings.PG_PLATSANNONS_TABLE)
+            log.debug(f'Postgresql bulked ads (id, updatedAt): {", ".join(("(" + str(ad["annonsId"]) + ", " + str(ad["updatedAt"])) + ")" for ad in results)}')
         if len(error_ids) > 0:
             error_ids_total.extend(error_ids)
             log.error('Details batch. Could not load and save data for ad ids: %s' % error_ids)
@@ -193,7 +175,6 @@ def fetch_details_and_save(ad_ids):
                   'to prevent accidental removal'
                   % error_ids_total)
         postgresql.set_expired_for_ids(settings.PG_PLATSANNONS_TABLE, error_ids_total, expired=False)
-
 
 
 def handle_not_found_ads(not_found_ids):
@@ -219,6 +200,8 @@ if __name__ == '__main__':
         start_auranest()
     elif sys.argv[1] == 'platsannonser':
         start_platsannonser()
+    elif sys.argv[1] == 'bootstrap_platsannonser':
+        bootstrap_platsannonser()
     else:
         print("Unknown dataset: %s" % sys.argv[1])
         sys.exit(1)

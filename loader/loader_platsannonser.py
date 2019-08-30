@@ -79,6 +79,14 @@ def fetch_ad_details(ad_id, ts, url):
                 ad['id'] = str(ad['annonsId'])
                 ad['updatedAt'] = ts
                 ad['expiresAt'] = ad['sistaPubliceringsdatum']
+                if 'kontaktpersoner' in ad:
+                    del ad['kontaktpersoner']
+                if 'organisationsnummer' in ad and \
+                        len(ad.get('organisationsnummer', '').strip()) > 9:
+                    orgnr = ad['organisationsnummer']
+                    significate_number_position = 4 if len(orgnr) == 12 else 2
+                    if int(orgnr[significate_number_position]) < 2:
+                        ad['organisationsnummer'] = None
                 clean_ad = clean_stringvalues(ad)
                 return clean_ad
         except requests.exceptions.ConnectionError as e:
@@ -100,7 +108,6 @@ def fetch_ad_details(ad_id, ts, url):
         except requests.exceptions.RequestException as e:
             fail_count += 1
             time.sleep(0.3)
-            log.warning("Unable to load data from %s - Other" % detail_url)
             log.warning(e)
             if fail_count >= fail_max:
                 log.error("Failed to fetch data at %s, skipping" % detail_url, e)
