@@ -72,7 +72,7 @@ def fetch_ad_details(ad_id, ts, url):
     detail_url = url + str(ad_id)
     while True:
         try:
-            r = requests.get(detail_url, timeout=60)
+            r = requests.get(detail_url, timeout=10)
             r.raise_for_status()
             ad = r.json()
             if ad:
@@ -92,23 +92,23 @@ def fetch_ad_details(ad_id, ts, url):
         except requests.exceptions.ConnectionError as e:
             fail_count += 1
             time.sleep(0.3)
-            log.warning("Unable to load data from %s - Connection error" % detail_url)
+            log.warning("Unable to load data from %s - Connection error, try %s" % (detail_url, fail_count))
             if fail_count >= fail_max:
-                log.error("Unable to continue loading data from %s - Connection" %
+                log.error("Failed to continue loading data from %s - Connection" %
                           detail_url, e)
                 sys.exit(1)
         except requests.exceptions.Timeout as e:
             fail_count += 1
             time.sleep(0.3)
-            log.warning("Unable to load data from %s - Timeout" % detail_url)
+            log.warning("Unable to load data from %s - Timeout, try %d" % (detail_url, fail_count))
             if fail_count >= fail_max:
-                log.error("Unable to continue loading data from %s - Timeout" %
+                log.error("Failed to continue loading data from %s - Timeout" %
                           detail_url, e)
                 sys.exit(1)
         except requests.exceptions.RequestException as e:
             fail_count += 1
             time.sleep(0.3)
-            log.warning(e)
+            log.warning("Unable to fetch data at %s, try %d" % (detail_url, fail_count))
             if fail_count >= fail_max:
                 log.error("Failed to fetch data at %s, skipping" % detail_url, e)
                 raise e

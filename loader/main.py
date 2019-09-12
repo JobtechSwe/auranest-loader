@@ -115,7 +115,7 @@ def get_and_set_removed_date(ad_id, ad_timestamp, doc):
         if la_ad and 'avpubliceringsdatum' in la_ad:
             doc['avpubliceringsdatum'] = la_ad['avpubliceringsdatum']
     except Exception:
-        log.info('Could not fetch LA-ad details for removed ad id %s.' % ad_id)
+        log.warning('Could not fetch LA-ad details for removed ad id %s.' % ad_id)
 
 
 def load_and_save_bootstrap_ads():

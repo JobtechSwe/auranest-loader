@@ -9,10 +9,11 @@ log = logging.getLogger(__name__)
 
 def load_ad(ad_id, ts, results, index, url, expires_path, user, pwd):
     fail_count = 0
+    fail_max = 10
     while True:
         try:
             r = requests.get(url, auth=(user, pwd),
-                             params={'id': ad_id}, timeout=60)
+                             params={'id': ad_id}, timeout=10)
             r.raise_for_status()
             ad = r.json()[0]
             if ad:
@@ -21,9 +22,9 @@ def load_ad(ad_id, ts, results, index, url, expires_path, user, pwd):
                 break
         except requests.exceptions.RequestException as e:
             fail_count += 1
-            log.warning('Failed to download ad "%s" %d times' % (ad_id, fail_count))
-            if fail_count > 10:
-                log.error("Unable to continue loading data from %s" % url, e)
+            log.warning('Unable to download ad "%s", try %d' % (ad_id, fail_count))
+            if fail_count >= fail_max:
+                log.error("Failed to continue loading data from %s" % url, e)
                 sys.exit(1)
 
 
